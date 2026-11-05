@@ -1,0 +1,14 @@
+<%- include('partials/head', { title: 'Delete flight' }) %>
+<section class="card">
+  <h1>Delete this flight?</h1>
+  <p>
+    <strong><%= f.flight_date %></strong>, <%= f.start_time %>–<%= f.end_time %> (<%= f.minutes %> min),
+    <%= f.location_name || f.location_text || '' %>, battery <%= f.battery_label || '—' %>.
+  </p>
+  <p>This can't be undone.</p>
+  <form method="post" action="/flights/<%= f.id %>/delete" class="form-actions">
+    <button class="btn btn-danger" type="submit">Delete flight</button>
+    <a class="btn btn-ghost" href="/">Keep it</a>
+  </form>
+</section>
+<%- include('partials/foot') %>

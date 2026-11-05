@@ -1,0 +1,12 @@
+<%- include('partials/head', { title: 'Sign in', hideNav: true }) %>
+<section class="card login">
+  <h1>Flight Log</h1>
+  <% if (error) { %><p class="error"><%= error %></p><% } %>
+  <form method="post" action="/login">
+    <label>Password
+      <input type="password" name="password" autocomplete="current-password" autofocus required>
+    </label>
+    <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+  </form>
+</section>
+<%- include('partials/foot') %>

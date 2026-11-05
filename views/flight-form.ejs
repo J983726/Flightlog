@@ -1,0 +1,132 @@
+<%- include('partials/head', { title: mode === 'new' ? 'Log flight' : 'Edit flight' }) %>
+<section class="card">
+  <h1><%= mode === 'new' ? 'Log a flight' : 'Edit flight' %></h1>
+
+  <% if (errors.length) { %>
+    <ul class="error"><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul>
+  <% } %>
+
+  <form method="post" action="<%= mode === 'new' ? '/flights' : '/flights/' + values.id %>" class="flight-form">
+    <fieldset>
+      <legend>When</legend>
+      <div class="grid3">
+        <label>Date
+          <input type="date" name="flight_date" value="<%= values.flight_date %>" required>
+        </label>
+        <label>Takeoff
+          <span class="with-btn">
+            <input type="time" name="start_time" value="<%= values.start_time %>" required>
+            <button type="button" class="btn btn-ghost now" data-for="start_time">Now</button>
+          </span>
+        </label>
+        <label>Landing
+          <span class="with-btn">
+            <input type="time" name="end_time" value="<%= values.end_time %>" required>
+            <button type="button" class="btn btn-ghost now" data-for="end_time">Now</button>
+          </span>
+        </label>
+      </div>
+      <p class="hint">A landing time earlier than takeoff counts as the next day.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Aircraft</legend>
+      <div class="grid3">
+        <label>Aircraft
+          <select name="aircraft_id" required>
+            <% aircraft.forEach(function (a) { %>
+              <option value="<%= a.id %>" <%= Number(values.aircraft_id) === a.id ? 'selected' : '' %>><%= a.name %> (<%= a.registration %>)</option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Battery
+          <input name="battery" list="battery-list" value="<%= values.battery %>" placeholder="B1" maxlength="20">
+          <datalist id="battery-list"><% batteries.forEach(function (b) { %><option value="<%= b.label %>"><% }) %></datalist>
+        </label>
+        <label>Rule
+          <select name="rule">
+            <option value="44809" <%= values.rule === '44809' ? 'selected' : '' %>>Recreational (44809)</option>
+            <option value="107" <%= values.rule === '107' ? 'selected' : '' %>>Part 107</option>
+          </select>
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Where</legend>
+      <div class="grid3">
+        <label>Location
+          <input name="location" list="location-list" value="<%= values.location %>" placeholder="Field name or lat, long" required maxlength="120">
+          <datalist id="location-list"><% locations.forEach(function (l) { %><option value="<%= l.name %>"><% }) %></datalist>
+        </label>
+        <label>Airspace
+          <select name="airspace" required>
+            <% airspaces.forEach(function (c) { %>
+              <option value="<%= c %>" <%= values.airspace === c ? 'selected' : '' %>>Class <%= c %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>LAANC / DroneZone #
+          <input name="auth" value="<%= values.auth %>" maxlength="60">
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Conditions</legend>
+      <div class="grid4">
+        <label>Max alt (ft AGL)
+          <input type="number" name="max_alt_ft" value="<%= values.max_alt_ft %>" min="0" max="400" inputmode="numeric">
+        </label>
+        <label>Wind (mph)
+          <input type="number" name="wind_mph" value="<%= values.wind_mph %>" min="0" max="99" inputmode="numeric">
+        </label>
+        <label>Gusts (mph)
+          <input type="number" name="gust_mph" value="<%= values.gust_mph %>" min="0" max="99" inputmode="numeric">
+        </label>
+        <label>Temp (°F)
+          <input type="number" name="temp_f" value="<%= values.temp_f %>" min="-40" max="130" inputmode="numeric">
+        </label>
+      </div>
+      <label>Sky / other weather
+        <input name="wx" value="<%= values.wx %>" placeholder="Clear, 10 SM" maxlength="200">
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Training</legend>
+      <label>Maneuvers practiced
+        <textarea name="practice" rows="2" maxlength="2000"><%= values.practice %></textarea>
+      </label>
+      <label>Notes (issues, incidents)
+        <textarea name="notes" rows="3" maxlength="4000"><%= values.notes %></textarea>
+      </label>
+    </fieldset>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit"><%= mode === 'new' ? 'Save flight' : 'Save changes' %></button>
+      <a class="btn btn-ghost" href="/">Cancel</a>
+    </div>
+  </form>
+</section>
+
+<script>
+  // Locations you've used before, with their usual airspace class.
+  var KNOWN = <%- JSON.stringify(locations).replace(/</g, '\\u003c') %>;
+  var loc = document.querySelector('[name=location]');
+  var air = document.querySelector('[name=airspace]');
+  loc.addEventListener('change', function () {
+    var hit = KNOWN.find(function (l) { return l.name === loc.value; });
+    if (hit && hit.airspace) air.value = hit.airspace;
+  });
+  // "Now" buttons fill the current time on this device.
+  document.querySelectorAll('.now').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var d = new Date();
+      var hh = String(d.getHours()).padStart(2, '0');
+      var mm = String(d.getMinutes()).padStart(2, '0');
+      document.querySelector('[name=' + b.dataset.for + ']').value = hh + ':' + mm;
+    });
+  });
+</script>
+<%- include('partials/foot') %>

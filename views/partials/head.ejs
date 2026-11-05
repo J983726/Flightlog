@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= typeof title !== 'undefined' ? title + ' · ' : '' %>Flight Log</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<% if (typeof hideNav === 'undefined' || !hideNav) { %>
+<header class="top">
+  <a class="brand" href="/">Flight Log</a>
+  <nav>
+    <a class="btn btn-primary" href="/flights/new">+ Log flight</a>
+    <form method="post" action="/logout" class="inline"><button class="btn btn-ghost" type="submit">Sign out</button></form>
+  </nav>
+</header>
+<% } %>
+<main>
