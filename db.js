@@ -30,7 +30,7 @@ db.pragma('foreign_keys = ON');
 db.exec(`
 CREATE TABLE IF NOT EXISTS aircraft (
   id             INTEGER PRIMARY KEY AUTOINCREMENT,
-  name           TEXT NOT NULL UNIQUE,              -- what shows in the dropdown, e.g. "Waypoint"
+  name           TEXT NOT NULL UNIQUE,              -- what shows in the dropdown, e.g. "Blinory HK55"
   make_model     TEXT,
   serial         TEXT,
   weight_g       INTEGER CHECK (weight_g IS NULL OR weight_g > 0),
@@ -134,8 +134,8 @@ const count = (t) => db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get().n;
 if (count('aircraft') === 0) {
   db.prepare(`INSERT INTO aircraft (name, make_model, weight_g, registration, notes)
               VALUES (?, ?, ?, ?, ?)`).run(
-    'Waypoint',
-    'Unbranded foldable GPS quadcopter, brushless, WiFi FPV',
+    'Blinory HK55',
+    'Blinory HK55 foldable GPS quadcopter, brushless, WiFi FPV',
     199,
     'exempt <250 g',
     'From CAP summer encampment 2026. Weighed 199 g with battery. Needs FAA registration before any Part 107 flight.'
@@ -162,5 +162,10 @@ if (count('certifications') === 0) {
       notes: 'Needed for CAP sUAS duty.', sort_order: 4 },
   ]);
 }
+
+// One-time rename (Nov 8, 2026): the "Waypoint" is a Blinory HK55. Safe to run on every start.
+db.prepare(`UPDATE aircraft SET name = 'Blinory HK55',
+  make_model = 'Blinory HK55 foldable GPS quadcopter, brushless, WiFi FPV',
+  updated_at = datetime('now') WHERE name = 'Waypoint'`).run();
 
 module.exports = db;

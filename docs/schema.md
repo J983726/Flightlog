@@ -5,7 +5,7 @@ SQLite, one file on the Railway volume (`DB_PATH=/data/flightlog.db`). `db.js` b
 ## Tables
 
 ### aircraft
-One row per drone. Seeded with the Waypoint (199 g, "exempt <250 g").
+One row per drone. Seeded with the Blinory HK55 (199 g, "exempt <250 g").
 
 | Column | Type | Notes |
 |---|---|---|
