@@ -9,6 +9,20 @@ const Database = require('better-sqlite3');
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'flightlog.db');
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
+// Say where the data lives, and warn loudly if it isn't on the Railway volume
+// (anything off the volume is erased on every deploy).
+console.log(`Database file: ${DB_PATH}`);
+const MOUNT = process.env.RAILWAY_VOLUME_MOUNT_PATH;
+if (process.env.RAILWAY_ENVIRONMENT) {
+  if (!MOUNT) {
+    console.warn('WARNING: no Railway volume attached. Flights will be lost on the next deploy.');
+  } else if (!path.resolve(DB_PATH).startsWith(path.resolve(MOUNT) + path.sep)) {
+    console.warn(`WARNING: DB_PATH is not on the volume (mounted at ${MOUNT}). Flights will be lost on the next deploy.`);
+  } else {
+    console.log(`Volume OK: mounted at ${MOUNT}`);
+  }
+}
+
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
