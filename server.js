@@ -215,6 +215,41 @@ app.get('/', (req, res) => {
   });
 });
 
+// Printable logbook: oldest first, optional date range (?from=YYYY-MM-DD&to=YYYY-MM-DD).
+const q_print = db.prepare(`${FLIGHT_SELECT}
+  WHERE (@from IS NULL OR f.flight_date >= @from) AND (@to IS NULL OR f.flight_date <= @to)
+  ORDER BY f.flight_date ASC, f.start_time ASC, f.id ASC`);
+const q_certs = db.prepare(`SELECT name, number, issued_date FROM certifications
+  WHERE status = 'done' ORDER BY sort_order`);
+
+app.get('/print', (req, res) => {
+  const ymd = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(String(s || '')) ? String(s) : null);
+  let from = ymd(req.query.from);
+  let to = ymd(req.query.to);
+  if (from && to && from > to) [from, to] = [to, from];
+
+  const flights = q_print.all({ from, to });
+  const minutes = flights.reduce((sum, f) => sum + f.minutes, 0);
+
+  const today = todayLocal();
+  const monthStart = `${today.slice(0, 7)}-01`;
+  const [y, m] = today.split('-').map(Number);
+  const lastMonthStart = m === 1 ? `${y - 1}-12-01` : `${y}-${String(m - 1).padStart(2, '0')}-01`;
+  const lastMonthEnd = addDays(monthStart, -1);
+
+  res.render('print', {
+    flights, minutes, from, to, today,
+    pilot: process.env.PILOT_NAME || 'Jason Mann',
+    certs: q_certs.all(),
+    ranges: [
+      { label: 'All flights', from: null, to: null },
+      { label: 'This month', from: monthStart, to: today },
+      { label: 'Last month', from: lastMonthStart, to: lastMonthEnd },
+      { label: `${y}`, from: `${y}-01-01`, to: `${y}-12-31` },
+    ],
+  });
+});
+
 // /flights/new must come before /flights/:id (the Job Ledger 404 lesson).
 app.get('/flights/new', (req, res) => {
   const last = q.flights.get(); // newest flight, to pre-fill the gear and field

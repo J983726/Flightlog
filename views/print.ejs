@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>sUAS Flight Log · <%= pilot %><%= from || to ? ' · ' + (from || 'start') + ' to ' + (to || today) : '' %></title>
+  <link rel="stylesheet" href="/print.css">
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <a href="/">← Back to flights</a>
+  <form method="get" action="/print" class="range">
+    <label>From <input type="date" name="from" value="<%= from || '' %>"></label>
+    <label>To <input type="date" name="to" value="<%= to || '' %>"></label>
+    <button type="submit">Show</button>
+  </form>
+  <span class="quick">
+    <% ranges.forEach(function (r) {
+         var href = '/print' + (r.from ? '?from=' + r.from + '&to=' + r.to : '');
+         var on = (r.from || null) === (from || null) && (r.to || null) === (to || null); %>
+      <a href="<%= href %>" class="<%= on ? 'on' : '' %>"><%= r.label %></a>
+    <% }) %>
+  </span>
+  <button type="button" class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+  <p class="tip">In the print dialog: Layout <b>Landscape</b>, Paper <b>Letter</b>, and turn off <b>Headers and footers</b> (this page has its own page numbers).</p>
+</div>
+
+<header class="doc-head">
+  <div>
+    <h1>sUAS Flight Log</h1>
+    <div class="sub">
+      Remote pilot: <b><%= pilot %></b>
+      <% certs.forEach(function (c) { %>
+        · <%= c.name %><%= c.number ? ' ' + c.number : '' %><%= c.issued_date ? ' (' + c.issued_date + ')' : '' %>
+      <% }) %>
+    </div>
+  </div>
+  <div class="range-label">
+    <%= from || to ? (from || 'First flight') + ' to ' + (to || today) : 'All flights' %><br>
+    <span class="muted">Printed <%= today %></span>
+  </div>
+</header>
+
+<% if (!flights.length) { %>
+  <p class="empty">No flights in this range.</p>
+<% } else { %>
+<table class="log">
+  <thead>
+    <tr>
+      <th class="r">#</th>
+      <th>Date</th>
+      <th>Takeoff</th>
+      <th>Landing</th>
+      <th class="r">Min</th>
+      <th>Rule</th>
+      <th>Aircraft / reg</th>
+      <th>Batt</th>
+      <th>Location</th>
+      <th>Class</th>
+      <th>Auth #</th>
+      <th class="r">Alt ft</th>
+      <th>Weather</th>
+      <th>Practice / notes</th>
+    </tr>
+  </thead>
+  <tbody>
+  <% var running = 0; flights.forEach(function (f, i) { running += f.minutes; %>
+    <tr>
+      <td class="r"><%= i + 1 %></td>
+      <td class="nowrap"><%= f.flight_date %></td>
+      <td><%= f.start_time %></td>
+      <td class="nowrap"><%= f.end_time %><% if (f.end_date !== f.flight_date) { %> <sup>+1</sup><% } %></td>
+      <td class="r"><%= f.minutes %></td>
+      <td><%= f.rule === '107' ? '107' : 'Rec' %></td>
+      <td><%= f.aircraft_name %><br><span class="muted"><%= f.registration %></span></td>
+      <td><%= f.battery_label || '' %></td>
+      <td><%= f.location_name || f.location_text || '' %></td>
+      <td><%= f.airspace %></td>
+      <td><%= f.auth || '' %></td>
+      <td class="r"><%= f.max_alt_ft ?? '' %></td>
+      <td><%= [
+            f.wind_mph != null ? f.wind_mph + (f.gust_mph != null ? 'G' + f.gust_mph : '') + ' mph' : '',
+            f.temp_f != null ? f.temp_f + '°F' : '',
+            f.wx || ''
+          ].filter(Boolean).join(', ') %></td>
+      <td><%= f.practice || '' %><% if (f.practice && f.notes) { %><br><% } %><% if (f.notes) { %><i><%= f.notes %></i><% } %></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+<% } %>
+
+<section class="foot">
+  <table class="totals">
+    <tr><th>Flights</th><td><%= flights.length %></td></tr>
+    <tr><th>Total flight time</th><td><%= hmm(minutes) %> (<%= minutes %> min)</td></tr>
+    <tr><th>Period</th><td><%= flights.length ? flights[0].flight_date + ' to ' + flights[flights.length - 1].flight_date : '—' %></td></tr>
+  </table>
+
+  <div class="sign">
+    <p>I certify that the entries in this log are true and correct.</p>
+    <div class="lines">
+      <div><span class="line"></span>Pilot signature</div>
+      <div><span class="line short"></span>Date</div>
+    </div>
+    <div class="printed-name"><%= pilot %></div>
+  </div>
+</section>
+
+</body>
+</html>
