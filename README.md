@@ -33,6 +33,7 @@ The database file is created at `DB_PATH` on first start. See `docs/schema.md` f
 | `GET /flights/new`, `POST /flights` | Log a flight (gear and field pre-filled from the last one) |
 | `GET /flights/:id/edit`, `POST /flights/:id` | Edit |
 | `GET /flights/:id/delete`, `POST /flights/:id/delete` | Confirm, then delete |
+| `GET /aircraft`, `/aircraft/new`, `/aircraft/:id/edit` | List, add and edit aircraft. No delete; mark retired to hide from the flight form. |
 | `GET /print?from=&to=` | Printable logbook: letter landscape, oldest first, totals, signature line, page numbers. Quick links for this month, last month, this year. |
 | `GET /healthz` | Returns `ok`; no login |
 
@@ -40,5 +41,5 @@ Optional variable: `PILOT_NAME` (defaults to "Jason Mann") for the print header 
 
 ## Still to build
 
-- Manage aircraft, batteries, locations and certifications
+- Manage batteries, locations and certifications
 - v1 import, CSV export

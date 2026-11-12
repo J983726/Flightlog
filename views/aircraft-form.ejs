@@ -1,0 +1,47 @@
+<%- include('partials/head', { title: mode === 'new' ? 'Add aircraft' : 'Edit aircraft' }) %>
+<section class="card">
+  <h1><%= mode === 'new' ? 'Add aircraft' : 'Edit ' + values.name %></h1>
+
+  <% if (errors.length) { %>
+    <ul class="error"><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul>
+  <% } %>
+
+  <form method="post" action="<%= mode === 'new' ? '/aircraft' : '/aircraft/' + values.id %>">
+    <div class="grid3">
+      <label>Name (shown in the flight form)
+        <input name="name" value="<%= values.name %>" required maxlength="60" placeholder="Holy Stone HS175D">
+      </label>
+      <label>Make / model
+        <input name="make_model" value="<%= values.make_model %>" maxlength="120">
+      </label>
+      <label>Serial number
+        <input name="serial" value="<%= values.serial %>" maxlength="60">
+      </label>
+    </div>
+    <div class="grid3">
+      <label>Weight with battery (g)
+        <input type="number" name="weight_g" value="<%= values.weight_g %>" min="1" max="25000" inputmode="numeric">
+      </label>
+      <label>Registration
+        <input name="registration" value="<%= values.registration %>" maxlength="40">
+      </label>
+      <label>Remote ID serial
+        <input name="remote_id" value="<%= values.remote_id %>" maxlength="60">
+      </label>
+    </div>
+    <p class="hint">Registration is copied onto each flight when it's saved. Changing it here later (say, to an FAA number for Part 107) won't rewrite past flights.</p>
+    <label>Notes
+      <textarea name="notes" rows="3" maxlength="2000"><%= values.notes %></textarea>
+    </label>
+    <label class="check">
+      <input type="checkbox" name="retired" value="1" <%= Number(values.active) === 0 ? 'checked' : '' %>>
+      Retired (hide from the flight form)
+    </label>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit"><%= mode === 'new' ? 'Add aircraft' : 'Save changes' %></button>
+      <a class="btn btn-ghost" href="/aircraft">Cancel</a>
+    </div>
+  </form>
+</section>
+<%- include('partials/foot') %>

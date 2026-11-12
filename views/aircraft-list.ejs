@@ -1,0 +1,32 @@
+<%- include('partials/head', { title: 'Aircraft' }) %>
+<div class="page-head">
+  <h1>Aircraft</h1>
+  <a class="btn btn-primary" href="/aircraft/new">+ Add aircraft</a>
+</div>
+
+<div class="table-wrap">
+  <table class="flights">
+    <thead>
+      <tr>
+        <th>Name</th><th>Make / model</th><th class="r">Weight</th><th>Registration</th>
+        <th class="r">Flights</th><th class="r">Time</th><th>Last flight</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+    <% aircraft.forEach(function (a) { %>
+      <tr class="<%= a.active ? '' : 'retired' %>">
+        <td><strong><%= a.name %></strong><% if (!a.active) { %> <span class="tag">retired</span><% } %></td>
+        <td><%= a.make_model || '' %></td>
+        <td class="r"><%= a.weight_g ? a.weight_g + ' g' : '' %></td>
+        <td><%= a.registration %></td>
+        <td class="r"><%= a.flights %></td>
+        <td class="r"><%= hmm(a.minutes) %></td>
+        <td class="nowrap"><%= a.last_flight || '—' %></td>
+        <td class="actions"><a href="/aircraft/<%= a.id %>/edit">Edit</a></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+</div>
+<p class="hint">Aircraft can't be deleted once they have flights. Mark one retired to hide it from the flight form.</p>
+<%- include('partials/foot') %>

@@ -31,7 +31,11 @@ a { color: var(--accent); }
   position: sticky; top: 0; z-index: 2;
 }
 .brand { font-weight: 700; text-decoration: none; color: var(--ink); font-size: 1.1rem; }
-.top nav { display: flex; gap: 8px; align-items: center; }
+.top nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 600px) {
+  .top { flex-wrap: wrap; }
+  .top nav .btn { min-height: 40px; padding: 0 10px; font-size: .9rem; }
+}
 .inline { display: inline; margin: 0; }
 
 .btn {
@@ -98,3 +102,9 @@ textarea { min-height: 0; resize: vertical; }
 .form-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .error { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); padding: 10px 14px 10px 28px; border-radius: 8px; }
 p.error { padding-left: 14px; }
+
+.page-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.page-head h1 { margin: 0; }
+tr.retired td { color: var(--muted); }
+label.check { display: flex; gap: 8px; align-items: center; color: var(--ink); }
+label.check input { width: auto; min-height: 0; margin: 0; }

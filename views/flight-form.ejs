@@ -41,7 +41,7 @@
         </label>
         <label>Battery
           <input name="battery" list="battery-list" value="<%= values.battery %>" placeholder="B1" maxlength="20">
-          <datalist id="battery-list"><% batteries.forEach(function (b) { %><option value="<%= b.label %>"><% }) %></datalist>
+          <datalist id="battery-list"></datalist>
         </label>
         <label>Rule
           <select name="rule">
@@ -113,6 +113,18 @@
 <script>
   // Locations you've used before, with their usual airspace class.
   var KNOWN = <%- JSON.stringify(locations).replace(/</g, '\\u003c') %>;
+  // Battery suggestions follow the aircraft picked above.
+  var BATTS = <%- JSON.stringify(batteries).replace(/</g, '\\u003c') %>;
+  var craft = document.querySelector('[name=aircraft_id]');
+  var blist = document.getElementById('battery-list');
+  function fillBatteries() {
+    var id = Number(craft.value);
+    blist.innerHTML = '';
+    BATTS.filter(function (b) { return b.aircraft_id === id || b.aircraft_id === null; })
+      .forEach(function (b) { var o = document.createElement('option'); o.value = b.label; blist.appendChild(o); });
+  }
+  craft.addEventListener('change', fillBatteries);
+  fillBatteries();
   var loc = document.querySelector('[name=location]');
   var air = document.querySelector('[name=airspace]');
   loc.addEventListener('change', function () {

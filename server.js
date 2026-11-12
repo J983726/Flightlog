@@ -95,7 +95,7 @@ const q = {
   monthMin:  db.prepare(`SELECT COALESCE(SUM(minutes), 0) AS m FROM flights WHERE substr(flight_date, 1, 7) = ?`),
   aircraft:  db.prepare(`SELECT * FROM aircraft WHERE active = 1 ORDER BY name`),
   aircraftById: db.prepare(`SELECT * FROM aircraft WHERE id = ?`),
-  batteries: db.prepare(`SELECT label FROM batteries WHERE retired_date IS NULL ORDER BY label`),
+  batteries: db.prepare(`SELECT label, aircraft_id FROM batteries WHERE retired_date IS NULL ORDER BY label`),
   locations: db.prepare(`SELECT name, airspace FROM locations ORDER BY name`),
   batteryAdd: db.prepare(`INSERT INTO batteries (label, aircraft_id) VALUES (?, ?) ON CONFLICT(label) DO NOTHING`),
   batteryId:  db.prepare(`SELECT id FROM batteries WHERE label = ?`),
@@ -190,9 +190,13 @@ const saveFlight = db.transaction((v, existing) => {
 });
 
 function formData(values, errors, mode) {
+  // Active aircraft, plus the flight's own aircraft if it has since been retired.
+  const aircraft = q.aircraft.all();
+  const current = q.aircraftById.get(Number(values.aircraft_id));
+  if (current && !aircraft.some((a) => a.id === current.id)) aircraft.push(current);
   return {
     values, errors, mode,
-    aircraft: q.aircraft.all(),
+    aircraft,
     batteries: q.batteries.all(),
     locations: q.locations.all(),
     airspaces: AIRSPACE,
@@ -306,6 +310,78 @@ app.post('/flights/:id/delete', (req, res) => {
   if (!f) return;
   q.remove.run(f.id);
   res.redirect('/');
+});
+
+// ---------- Aircraft ----------
+
+const qa = {
+  list: db.prepare(`SELECT a.*, COUNT(f.id) AS flights, COALESCE(SUM(f.minutes), 0) AS minutes,
+                           MAX(f.flight_date) AS last_flight
+                    FROM aircraft a LEFT JOIN flights f ON f.aircraft_id = a.id
+                    GROUP BY a.id ORDER BY a.active DESC, a.name`),
+  byName: db.prepare(`SELECT id FROM aircraft WHERE name = ? AND id <> ?`),
+  insert: db.prepare(`INSERT INTO aircraft (name, make_model, serial, weight_g, registration, remote_id, active, notes)
+                      VALUES (@name, @make_model, @serial, @weight_g, @registration, @remote_id, @active, @notes)`),
+  update: db.prepare(`UPDATE aircraft SET name=@name, make_model=@make_model, serial=@serial, weight_g=@weight_g,
+                      registration=@registration, remote_id=@remote_id, active=@active, notes=@notes,
+                      updated_at=datetime('now') WHERE id=@id`),
+};
+
+function readAircraft(body, id) {
+  const s = (k) => String(body[k] ?? '').trim();
+  const v = {
+    name: s('name'), make_model: s('make_model') || null, serial: s('serial') || null,
+    weight_g: s('weight_g'), registration: s('registration') || 'exempt <250 g',
+    remote_id: s('remote_id') || null, active: body.retired ? 0 : 1, notes: s('notes') || null,
+  };
+  const errors = [];
+  if (!v.name) errors.push('Name is required.');
+  else if (qa.byName.get(v.name, id || 0)) errors.push('Another aircraft already has that name.');
+  if (v.weight_g === '') v.weight_g = null;
+  else {
+    const n = Number(v.weight_g);
+    if (!Number.isInteger(n) || n < 1 || n > 25000) errors.push('Weight must be a whole number of grams.');
+    else v.weight_g = n;
+  }
+  return { v, errors };
+}
+
+const blankAircraft = { name: '', make_model: '', serial: '', weight_g: '', registration: 'exempt <250 g', remote_id: '', active: 1, notes: '' };
+
+app.get('/aircraft', (req, res) => res.render('aircraft-list', { aircraft: qa.list.all() }));
+
+// /aircraft/new before /aircraft/:id
+app.get('/aircraft/new', (req, res) => res.render('aircraft-form', { values: blankAircraft, errors: [], mode: 'new' }));
+
+app.post('/aircraft', (req, res) => {
+  const { v, errors } = readAircraft(req.body, 0);
+  if (errors.length) return res.status(400).render('aircraft-form', { values: { ...req.body, ...v }, errors, mode: 'new' });
+  qa.insert.run(v);
+  res.redirect('/aircraft');
+});
+
+function getAircraft(req, res) {
+  const id = Number(req.params.id);
+  const a = Number.isInteger(id) ? q.aircraftById.get(id) : null;
+  if (!a) res.status(404).render('not-found');
+  return a;
+}
+
+app.get('/aircraft/:id/edit', (req, res) => {
+  const a = getAircraft(req, res);
+  if (!a) return;
+  const values = { ...a };
+  for (const k of Object.keys(values)) if (values[k] === null) values[k] = '';
+  res.render('aircraft-form', { values, errors: [], mode: 'edit' });
+});
+
+app.post('/aircraft/:id', (req, res) => {
+  const a = getAircraft(req, res);
+  if (!a) return;
+  const { v, errors } = readAircraft(req.body, a.id);
+  if (errors.length) return res.status(400).render('aircraft-form', { values: { ...req.body, ...v, id: a.id }, errors, mode: 'edit' });
+  qa.update.run({ ...v, id: a.id });
+  res.redirect('/aircraft');
 });
 
 app.use((req, res) => res.status(404).render('not-found'));
